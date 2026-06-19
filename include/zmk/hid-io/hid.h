@@ -70,9 +70,10 @@ static const uint8_t zmk_hid_report_desc_alt[] = {
     HID_USAGE(HID_USAGE_GD_RX),
     HID_USAGE(HID_USAGE_GD_RY),
     HID_USAGE(HID_USAGE_GD_RZ),
-    HID_LOGICAL_MIN8(-0x7F),
-    HID_LOGICAL_MAX8(0x7F),
-    HID_REPORT_SIZE(0x08),
+    // 16-bit axes (was 8) so faders keep their full ADC resolution on the wire.
+    HID_LOGICAL_MIN16(0xFF, -0x7F),
+    HID_LOGICAL_MAX16(0xFF, 0x7F),
+    HID_REPORT_SIZE(0x10),
     HID_REPORT_COUNT(0x06),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_REL),
     HID_USAGE_PAGE(HID_USAGE_BUTTON),
