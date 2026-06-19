@@ -153,7 +153,9 @@ static int zip_handle_event(const struct device *dev, struct input_event *event,
 
     #if IS_ENABLED(CONFIG_ZMK_HID_IO_JOYSTICK)
         if (config->usage == ZIP_HID_IO_USAGE_FWD_TO_JOYSTICK) {
-            if (data->fwdr.data.mode == HID_IO_XY_DATA_MODE_REL) {
+            /* REL accumulates deltas; ABS carries an absolute position
+             * (slide faders). Forward both, not just REL. */
+            if (data->fwdr.data.mode != HID_IO_XY_DATA_MODE_NONE) {
                 zmk_hid_joy2_movement_set(data->fwdr.data.x, data->fwdr.data.y);
             }
             if (data->fwdr.button_set != 0) {
@@ -171,7 +173,11 @@ static int zip_handle_event(const struct device *dev, struct input_event *event,
                 }
             }
             zmk_endpoints_send_joystick_report_alt();
-            zmk_hid_joy2_movement_set(0, 0);
+            /* Zero only relative deltas after sending; absolute axes latch
+             * their position so the next report still carries it. */
+            if (data->fwdr.data.mode == HID_IO_XY_DATA_MODE_REL) {
+                zmk_hid_joy2_movement_set(0, 0);
+            }
         }
     #endif
 
@@ -214,7 +220,12 @@ static int zip_handle_event(const struct device *dev, struct input_event *event,
 
 #endif
 
-        clear_xy_data(&data->fwdr.data);
+        /* Latch absolute joystick axes across syncs (faders report position,
+         * not deltas) so a change on one fader doesn't zero the other. */
+        if (!(config->usage == ZIP_HID_IO_USAGE_FWD_TO_JOYSTICK &&
+              data->fwdr.data.mode == HID_IO_XY_DATA_MODE_ABS)) {
+            clear_xy_data(&data->fwdr.data);
+        }
         clear_xy_data(&data->fwdr.wheel_data);
 
         data->fwdr.button_set = data->fwdr.button_clear = 0;
