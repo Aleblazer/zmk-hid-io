@@ -17,6 +17,17 @@ config ZMK_HID_IO_JOYSTICK
     bool "Enable HID I/O Joystick"
     default n
 
+config ZMK_HID_IO_JOYSTICK_HEARTBEAT_MS
+    int "Re-send the latched joystick report every N ms over USB (0 = off)"
+    default 0
+    depends on ZMK_HID_IO_JOYSTICK
+    help
+      Event-only reporting means the device is silent at rest, so a host app
+      that opens after the last movement never learns the current position.
+      When > 0, periodically re-send the latched axes over USB (only) so the
+      app re-syncs within this interval. USB-gated, so it never affects the
+      battery-powered halves.
+
 config ZMK_HID_IO_OUTPUT
     bool "Enable HID I/O Output"
     default n

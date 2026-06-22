@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+
 #include <zmk/endpoints.h>
 #include <zmk/hid.h>
 #include <zmk/usb_hid.h>
@@ -57,6 +60,30 @@ int zmk_endpoints_send_joystick_report_alt() {
     LOG_ERR("Unsupported endpoint transport %d", current_instance.transport);
     return -ENOTSUP;
 }
+
+#if CONFIG_ZMK_HID_IO_JOYSTICK_HEARTBEAT_MS > 0
+// Periodically re-send the latched joystick axes over USB so a host app that
+// connects/opens after the last movement still sees the current position
+// (event-only reporting otherwise leaves the device silent at rest). USB-gated,
+// so the battery-powered halves are never involved.
+static void hid_io_joystick_heartbeat(struct k_work *work);
+static K_WORK_DELAYABLE_DEFINE(hid_io_joystick_heartbeat_work, hid_io_joystick_heartbeat);
+
+static void hid_io_joystick_heartbeat(struct k_work *work) {
+    if (zmk_endpoint_get_selected().transport == ZMK_TRANSPORT_USB) {
+        zmk_endpoints_send_joystick_report_alt();
+    }
+    k_work_reschedule(&hid_io_joystick_heartbeat_work,
+                      K_MSEC(CONFIG_ZMK_HID_IO_JOYSTICK_HEARTBEAT_MS));
+}
+
+static int hid_io_joystick_heartbeat_init(void) {
+    k_work_reschedule(&hid_io_joystick_heartbeat_work,
+                      K_MSEC(CONFIG_ZMK_HID_IO_JOYSTICK_HEARTBEAT_MS));
+    return 0;
+}
+SYS_INIT(hid_io_joystick_heartbeat_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+#endif
 #endif // IS_ENABLED(CONFIG_ZMK_HID_IO_JOYSTICK)
 
 
