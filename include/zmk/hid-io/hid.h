@@ -58,8 +58,15 @@ static const uint8_t zmk_hid_report_desc_alt[] = {
     // HID_COLLECTION(HID_COLLECTION_APPLICATION),
 
 #if IS_ENABLED(CONFIG_ZMK_HID_IO_JOYSTICK)
-    HID_USAGE_PAGE(HID_USAGE_GD),
-    HID_USAGE(HID_USAGE_GD_JOYSTICK),
+    /* Vendor-defined top-level collection (page 0xFF00, usage 0x01) instead of
+     * Generic-Desktop / Joystick. DirectInput, XInput, and the "Set up USB game
+     * controllers" panel classify a device by its top-level application-collection
+     * usage, so a vendor page keeps the faders out of all of them -- a disconnect
+     * can no longer steal a real gamepad's player slot. The report layout below
+     * (report id 2, six 16-bit axes + 8 button bits) is unchanged; the PC app
+     * finds the device by VID/PID + this vendor usage. */
+    HID_USAGE_PAGE16(0x00, 0xFF),
+    HID_USAGE(0x01),
     HID_COLLECTION(HID_COLLECTION_APPLICATION),
     HID_REPORT_ID(ZMK_HID_REPORT_ID__IO_JOYSTICK),
     HID_COLLECTION(HID_COLLECTION_LOGICAL),
