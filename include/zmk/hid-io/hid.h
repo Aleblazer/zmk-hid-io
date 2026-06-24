@@ -58,39 +58,44 @@ static const uint8_t zmk_hid_report_desc_alt[] = {
     // HID_COLLECTION(HID_COLLECTION_APPLICATION),
 
 #if IS_ENABLED(CONFIG_ZMK_HID_IO_JOYSTICK)
-    /* Vendor-defined top-level collection (page 0xFF00, usage 0x01) instead of
-     * Generic-Desktop / Joystick. DirectInput, XInput, and the "Set up USB game
-     * controllers" panel classify a device by its top-level application-collection
-     * usage, so a vendor page keeps the faders out of all of them -- a disconnect
-     * can no longer steal a real gamepad's player slot. The report layout below
-     * (report id 2, six 16-bit axes + 8 button bits) is unchanged; the PC app
-     * finds the device by VID/PID + this vendor usage. */
+    /* Fully vendor-defined collection (page 0xFF00). Not just the top-level usage:
+     * the axes and the (unused) button bits below are ALSO on the vendor page
+     * rather than Generic-Desktop X/Y/Z.../Button, so the descriptor exposes no
+     * standard game-controller usages anywhere.
+     *
+     * DirectInput, XInput and joy.cpl classify a device only by its top-level
+     * application usage, so a vendor top level was enough to leave those. But
+     * Steam Input and SDL-based games walk the WHOLE descriptor and treat a device
+     * exposing GD axes + Button usages as a generic gamepad even under a vendor
+     * collection -- which is why Steam still grabbed it. Keeping every usage on the
+     * vendor page stops that too.
+     *
+     * The report layout (id 2: six 16-bit axes + 8 bits) is unchanged, so the PC
+     * app -- which finds the device by VID/PID + the vendor usage and reads the
+     * axes by byte offset -- is unaffected. */
     HID_USAGE_PAGE16(0x00, 0xFF),
     HID_USAGE(0x01),
     HID_COLLECTION(HID_COLLECTION_APPLICATION),
     HID_REPORT_ID(ZMK_HID_REPORT_ID__IO_JOYSTICK),
     HID_COLLECTION(HID_COLLECTION_LOGICAL),
-    HID_USAGE_PAGE(HID_USAGE_GEN_DESKTOP),
-    HID_USAGE(HID_USAGE_GD_X),
-    HID_USAGE(HID_USAGE_GD_Y),
-    HID_USAGE(HID_USAGE_GD_Z),
-    HID_USAGE(HID_USAGE_GD_RX),
-    HID_USAGE(HID_USAGE_GD_RY),
-    HID_USAGE(HID_USAGE_GD_RZ),
-    // 16-bit axes (was 8) so faders keep their full ADC resolution on the wire.
+    // Six 16-bit axes as vendor-defined usages (0x10..0x15) on page 0xFF00 -- no
+    // Generic-Desktop X/Y/Z so nothing reads them as joystick/gamepad axes.
+    HID_USAGE(0x10),
+    HID_USAGE(0x11),
+    HID_USAGE(0x12),
+    HID_USAGE(0x13),
+    HID_USAGE(0x14),
+    HID_USAGE(0x15),
     HID_LOGICAL_MIN16(0xFF, -0x7F),
     HID_LOGICAL_MAX16(0xFF, 0x7F),
     HID_REPORT_SIZE(0x10),
     HID_REPORT_COUNT(0x06),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_REL),
-    HID_USAGE_PAGE(HID_USAGE_BUTTON),
-    HID_USAGE_MIN8(0x1),
-    HID_USAGE_MAX8(ZMK_HID_JOYSTICK_NUM_BUTTONS),
-    HID_LOGICAL_MIN8(0x00),
-    HID_LOGICAL_MAX8(0x01),
+    // 8 bits of constant padding where the buttons used to be: the app never read
+    // them, and the Button usage page is itself a controller signal we want gone.
     HID_REPORT_SIZE(0x01),
-    HID_REPORT_COUNT(0x8),
-    HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
+    HID_REPORT_COUNT(0x08),
+    HID_INPUT(ZMK_HID_MAIN_VAL_CONST | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
     HID_END_COLLECTION,
     HID_END_COLLECTION,
 #endif // IS_ENABLED(CONFIG_ZMK_HID_IO_JOYSTICK)
