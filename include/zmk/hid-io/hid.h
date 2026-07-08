@@ -70,26 +70,30 @@ static const uint8_t zmk_hid_report_desc_alt[] = {
      * collection -- which is why Steam still grabbed it. Keeping every usage on the
      * vendor page stops that too.
      *
-     * The report layout (id 2: six 16-bit axes + 8 bits) is unchanged, so the PC
-     * app -- which finds the device by VID/PID + the vendor usage and reads the
-     * axes by byte offset -- is unaffected. */
+     * The report layout (id 2: eight 16-bit axes + 8 bits) is read by the PC app
+     * -- which finds the device by VID/PID + the vendor usage and reads the axes
+     * by byte offset -- so its axis count must stay in sync with MaxAxes there. */
     HID_USAGE_PAGE16(0x00, 0xFF),
     HID_USAGE(0x01),
     HID_COLLECTION(HID_COLLECTION_APPLICATION),
     HID_REPORT_ID(ZMK_HID_REPORT_ID__IO_JOYSTICK),
     HID_COLLECTION(HID_COLLECTION_LOGICAL),
-    // Six 16-bit axes as vendor-defined usages (0x10..0x15) on page 0xFF00 -- no
-    // Generic-Desktop X/Y/Z so nothing reads them as joystick/gamepad axes.
+    // Eight 16-bit axes as vendor-defined usages (0x10..0x17) on page 0xFF00 -- no
+    // Generic-Desktop X/Y/Z so nothing reads them as joystick/gamepad axes. Only
+    // the first two are wired in the forwarder today; the rest are reserved for
+    // additional faders and report 0 until mapped.
     HID_USAGE(0x10),
     HID_USAGE(0x11),
     HID_USAGE(0x12),
     HID_USAGE(0x13),
     HID_USAGE(0x14),
     HID_USAGE(0x15),
+    HID_USAGE(0x16),
+    HID_USAGE(0x17),
     HID_LOGICAL_MIN16(0xFF, -0x7F),
     HID_LOGICAL_MAX16(0xFF, 0x7F),
     HID_REPORT_SIZE(0x10),
-    HID_REPORT_COUNT(0x06),
+    HID_REPORT_COUNT(0x08),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_REL),
     // 8 bits of constant padding where the buttons used to be: the app never read
     // them, and the Button usage page is itself a controller signal we want gone.

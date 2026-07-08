@@ -21,7 +21,7 @@ LOG_MODULE_DECLARE(hid_io, CONFIG_ZMK_HID_IO_LOG_LEVEL);
 static struct zmk_hid_joystick_report_alt joystick_report_alt = {
     .report_id = ZMK_HID_REPORT_ID__IO_JOYSTICK,
     .body = { .d_x = 0, .d_y = 0, .d_z = 0,  .d_rx = 0, .d_ry = 0, .d_rz = 0,
-              .buttons = 0 }};
+              .d_a6 = 0, .d_a7 = 0, .buttons = 0 }};
 
 // Keep track of how often a button was pressed.
 // Only release the button if the count is 0.

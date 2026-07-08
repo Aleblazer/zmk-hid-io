@@ -17,13 +17,18 @@
 struct zmk_hid_joystick_report_body_alt {
     /* 16-bit axes: slide faders carry an absolute position whose useful
      * resolution (esp. the taper-compressed top of travel) is far finer than
-     * 8 bits. X = left fader, Y = right fader. */
+     * 8 bits. X = left fader, Y = right fader; d_a6/d_a7 are axes 6-7 (0-indexed)
+     * reserved for additional faders. The field order IS the report byte order,
+     * which the PC app reads by offset -- keep it in sync with the descriptor
+     * (hid.h) and MaxAxes in the app. */
     int16_t d_x;
     int16_t d_y;
     int16_t d_z;
     int16_t d_rx;
     int16_t d_ry;
     int16_t d_rz;
+    int16_t d_a6;
+    int16_t d_a7;
     zmk_joystick_button_flags_t buttons;
 } __packed;
 struct zmk_hid_joystick_report_alt {
