@@ -122,7 +122,10 @@ static const struct hid_ops ops = {
 static int zmk_usb_hid_send_report_alt(const uint8_t *report, size_t len) {
     switch (zmk_usb_get_status()) {
     case USB_DC_SUSPEND:
-        return usb_wakeup_request();
+        // A volume fader must never resume a sleeping host. Drop the report while
+        // USB is suspended instead of requesting remote wakeup; the app re-reads
+        // the level on open. (The keyboard's own wake path is separate.)
+        return 0;
     case USB_DC_ERROR:
     case USB_DC_RESET:
     case USB_DC_DISCONNECTED:
